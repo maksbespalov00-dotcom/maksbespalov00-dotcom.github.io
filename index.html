@@ -226,7 +226,7 @@
       position: fixed;
       left: 50%;
       top: 14px;
-      transform: translateX(-50%);
+      transform: translateX(-50%) translateY(-8px);
       z-index: 9999;
 
       max-width: min(92vw, 520px);
@@ -236,7 +236,7 @@
       background: rgba(18,20,27,.92);
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
-      color: var(--shadow);
+      color: var(--text);
 
       opacity: 0;
       pointer-events: none;
@@ -244,7 +244,7 @@
     }
     .toast.show {
       opacity: 1;
-      transform: translateX(-50%) translateY(4px);
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
@@ -1684,46 +1684,70 @@ let swReg = null;
 async function initServiceWorkerUpdates(){
   if (!("serviceWorker" in navigator)) return;
 
-  swReg = await navigator.serviceWorker.register("/service-worker.js");
+  const swReg = await navigator.serviceWorker.register("/service-worker.js");
 
   const btn = document.getElementById("btn-update-app");
   const hot = () => btn && btn.classList.add("is-hot");
+  const cool = () => btn && btn.classList.remove("is-hot");
 
-  if (swReg.waiting) hot();
+  if (swReg.waiting) hot(); else cool();
 
+  // Когда скачалось новое — подсветим кнопку и покажем красивое сообщение (без alert)
   swReg.addEventListener("updatefound", () => {
     const nw = swReg.installing;
     if (!nw) return;
+
     nw.addEventListener("statechange", () => {
       if (nw.state === "installed" && navigator.serviceWorker.controller) {
         hot();
-        alert("Найдено обновление — нажми ⟳ ещё раз", "ок", 4000);
+        toast("Есть обновление — нажми ⟳ ещё раз");
+        showUpdateStatus("Есть обновление — нажми ⟳ ещё раз", "ok", 2500);
       }
     });
   });
 
+  // Когда новый SW стал активным — перезагружаем, чтобы подхватить новую версию
   let reloaded = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (reloaded) return;
     reloaded = true;
-    showUpdateStatus("Обновляю...", "", 2000)
+    showUpdateStatus("Обновляю...", "", 1200);
+    toast("Обновляю…");
     location.reload();
   });
 
+  // Кнопка ⟳
   if (btn) btn.addEventListener("click", async () => {
+    toast("Проверяю обновления…");
+    showUpdateStatus("Проверяю обновления…", "", 1200);
+
     await swReg.update();
+
+    // Если обновление уже скачано и ждёт — ставим
     if (swReg.waiting) {
-      swReg.waiting.postMessage({ type:"SKIP_WAITING" });
+      toast("Ставлю обновление ✅");
+      showUpdateStatus("Ставлю обновление…", "ok", 1500);
+      swReg.waiting.postMessage({ type: "SKIP_WAITING" });
       return;
     }
+
+    // Если обновлений нет — красиво сообщаем и возвращаем на “Прайс”
     toast("Обновлений нет ✅");
-    showScreen ("price");
+    showUpdateStatus("Обновлений нет ✅", "ok", 1500);
+    cool();
+    showScreen("price");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
 
+
 document.addEventListener("DOMContentLoaded", initServiceWorkerUpdates);
-const toastEl = document.getElementById("toast");
+let toastEl = null;
 let toastTimer;
+
+document.addEventListener ("DOMContentLoaded", () => {
+toastEl = document.getElementById("toast");
+});
 
 function toast(msg, ms = 1600){
   if(!toastEl) return;
