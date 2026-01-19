@@ -1,4 +1,4 @@
-const CACHE = "beauty-accounting-v14";
+const CACHE = "beauty-accounting-v15";
 const ASSETS = [
   "/",
   "/index.html",
@@ -48,3 +48,10 @@ self.addEventListener("fetch", (event) => {
     caches.match(req).then((cached) => cached || fetch(req))
   );
 });
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+

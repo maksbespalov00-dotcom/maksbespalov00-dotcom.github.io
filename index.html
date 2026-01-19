@@ -42,7 +42,26 @@
     .wrap{max-width:980px;margin:0 auto;padding:14px 14px 90px}
     h1{margin:0;font-size:20px;font-weight: 600;letter-spacing:.2px}
     .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
-    nav{display:flex;gap:10px;overflow:auto;padding:12px 14px;border-top:1px solid var(--border)}
+    nav{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:12px 14px;
+      border-top:1px solid var(--border);
+      align-items: center;
+    }
+    .nav-btn--udpate {
+      margin-left: auto;
+      padding: 10px 14px;
+      min-width: auto;
+      font-weight: 700;
+      opacity: .85;
+    }
+    .nav-btn--udpate.is-hot{
+      border-color: rgba(94, 234, 212, .9);
+      box-shadow: 0 0 0 2px rgba(94,234,212,.15);
+      opacity: 1;
+    }
     .nav-btn{white-space:nowrap;border:1px solid var(--border);background:transparent;color:var(--text);padding:10px 12px;border-radius:999px;cursor:pointer}
     .nav-btn.active{border-color:rgba(94,234,212,.6);box-shadow:0 0 0 3px rgba(94,234,212,.08) inset;color:var(--accent)}
     main section{padding-top:14px}
@@ -196,6 +215,7 @@
       <button class="nav-btn" data-screen="archive">Архив</button>
       <button class="nav-btn" data-screen="analytics">Аналитика</button>
       <button class="nav-btn" data-screen="expenses">Расходы</button>
+      <button class="nav-btn nav-btn--update" id="btn-update-app" type="button" title="Проверить обновления">⟳</button>
     </nav>
   </header>
 
@@ -1598,6 +1618,49 @@ navButtons.forEach(btn => btn.addEventListener("click", ()=> showScreen(btn.data
 
   showScreen("price");
 })();
+
+let swReg = null;
+
+async function initServiceWorkerUpdates(){
+  if (!("serviceWorker" in navigator)) return;
+
+  swReg = await navigator.serviceWorker.register("/service-worker.js");
+
+  const btn = document.getElementById("btn-update-app");
+  const hot = () => btn && btn.classList.add("is-hot");
+
+  if (swReg.waiting) hot();
+
+  swReg.addEventListener("updatefound", () => {
+    const nw = swReg.installing;
+    if (!nw) return;
+    nw.addEventListener("statechange", () => {
+      if (nw.state === "installed" && navigator.serviceWorker.controller) {
+        hot();
+        alert("Доступно обновление. Нажми ⟳ ещё раз.");
+      }
+    });
+  });
+
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+
+  if (btn) btn.addEventListener("click", async () => {
+    await swReg.update();
+    if (swReg.waiting) {
+      swReg.waiting.postMessage({ type:"SKIP_WAITING" });
+      return;
+    }
+    alert("Обновлений нет 🙂");
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initServiceWorkerUpdates);
+
 </script>
 <script>
   if ("serviceWorker" in navigator) {
