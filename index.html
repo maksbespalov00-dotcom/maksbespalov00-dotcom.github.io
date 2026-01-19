@@ -42,6 +42,26 @@
     .wrap{max-width:980px;margin:0 auto;padding:14px 14px 90px}
     h1{margin:0;font-size:20px;font-weight: 600;letter-spacing:.2px}
     .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .update-status {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 14px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0;
+      transform: translate(-4px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .update-status.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .update-status.ok {
+      color: #9ad9c7;
+    }
+    .update-status.err {
+      color: #ffb3b3;
+    }
     nav{
       display:flex;
       gap:10px;
@@ -217,6 +237,7 @@
       <button class="nav-btn" data-screen="expenses">Расходы</button>
       <button class="nav-btn nav-btn--update" id="btn-update-app" type="button" title="Проверить обновления">⟳</button>
     </nav>
+    <div id="updateStatus" class="update-status" aria-live="polite"></div>
   </header>
 
   <main class="wrap">
@@ -1619,6 +1640,20 @@ navButtons.forEach(btn => btn.addEventListener("click", ()=> showScreen(btn.data
   showScreen("price");
 })();
 
+const updateStatusEl = document.getElementById("updateStatus");
+
+function showUpdateStatus(text, kind = "", ms = 1800){
+  if (!updateStatusEl) return;
+  updateStatusEl.textContent = text;
+  updateStatusEl.className = "update-status show" + (kind ? " " + kind : "");
+  clearTimeout(showUpdateStatus._t);
+  showUpdateStatus._t = setTimeout(() => {
+    updateStatusEl.className = "update-status";
+    updateStatusEl.textContent = "";
+  }, ms);
+}
+
+
 let swReg = null;
 
 async function initServiceWorkerUpdates(){
@@ -1637,7 +1672,7 @@ async function initServiceWorkerUpdates(){
     nw.addEventListener("statechange", () => {
       if (nw.state === "installed" && navigator.serviceWorker.controller) {
         hot();
-        alert("Доступно обновление. Нажми ⟳ ещё раз.");
+        alert("Найдено обновление — нажми ⟳ ещё раз", "ок", 4000);
       }
     });
   });
@@ -1646,6 +1681,7 @@ async function initServiceWorkerUpdates(){
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (reloaded) return;
     reloaded = true;
+    showUpdateStatus("Обновляю...", "", 2000)
     location.reload();
   });
 
@@ -1655,7 +1691,7 @@ async function initServiceWorkerUpdates(){
       swReg.waiting.postMessage({ type:"SKIP_WAITING" });
       return;
     }
-    alert("Обновлений нет 🙂");
+    alert("Обновлений нет ", "ок");
   });
 }
 
