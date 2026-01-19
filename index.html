@@ -221,6 +221,31 @@
       background: rgba(76,175,80,0.08);
       border-radius: 12px;
     }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      z-index: 9999;
+
+      max-width: min(92vw, 520px);
+      padding: 10px 14px;
+      border-radius: 12px;
+
+      background: rgba(18,20,27,.92);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      color: var(--shadow);
+
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18 ease, transforn .18s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(4px);
+    }
   </style>
 </head>
 <body>
@@ -1691,12 +1716,28 @@ async function initServiceWorkerUpdates(){
       swReg.waiting.postMessage({ type:"SKIP_WAITING" });
       return;
     }
-    alert("Обновлений нет ", "ок");
+    toast("Обновлений нет ✅");
+    showScreen ("price");
   });
 }
 
 document.addEventListener("DOMContentLoaded", initServiceWorkerUpdates);
+const toastEl = document.getElementById("toast");
+let toastTimer;
+
+function toast(msg, ms = 1600){
+  if(!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.hidden = false;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{
+    toastEl.classList.remove("show");
+    toastEl.hidden = true;
+  }, ms);
+}
 
 </script>
+<div id="toast" class="toast" hidden></div>
 </body>
 </html>
