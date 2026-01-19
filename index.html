@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Учёт мастера(Offline)</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0c10">
+
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/favicon.ico">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Учёт мастера">
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#12141b;
+      --muted:#a7b0c0;
+      --text:#eef1f7;
+      --accent:#5eead4;
+      --danger:#ff6b6b;
+      --border:rgba(255,255,255,.10);
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    *{
+      box-sizing:border-box
+    }
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0b0c10 0%,#0c1220 100%);
+      color:var(--text);
+      font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial
+    }
+    header{position:sticky;padding: 2px; top:0;z-index:10;background:rgba(11,12,16,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 14px 90px}
+    h1{margin:0;font-size:20px;font-weight: 600;letter-spacing:.2px}
+    .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+    nav{display:flex;gap:10px;overflow:auto;padding:12px 14px;border-top:1px solid var(--border)}
+    .nav-btn{white-space:nowrap;border:1px solid var(--border);background:transparent;color:var(--text);padding:10px 12px;border-radius:999px;cursor:pointer}
+    .nav-btn.active{border-color:rgba(94,234,212,.6);box-shadow:0 0 0 3px rgba(94,234,212,.08) inset;color:var(--accent)}
+    main section{padding-top:14px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .card{background:rgba(18,20,27,.92);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+    .row >* {
+      min-width: 0;
+    }
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input,select,textarea {
+      width:100%;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.15);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      min-width: 0;
+      max-width: 100%;
+      min-inline-size: 0;
+    }
+
+    .row > div {
+      overflow: hidden;
+    }
+
+    input[type="date"]{
+      display: block;
+      width: 100%;
+      max-width: 100%;
+    }
+    /* select: читаемые выпадающие списки */
+    select{
+      background-color: rgba(0,0,0,.28);
+    }
+
+    select option{
+      background-color: #12141b; /* тёмная подложка */
+      color: #eef1f7;            /* светлый текст */
+    }
+
+    select option:checked{
+      background-color: #1b2435;
+    }
+
+    /* для некоторых браузеров (где есть) */
+    select optgroup{
+      background-color: #12141b;
+      color: #a7b0c0;
+    }
+
+    textarea{min-height:80px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:rgba(94,234,212,.6);box-shadow:0 0 0 3px rgba(94,234,212,.10)}
+    .btn{border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn-primary{border-color:rgba(94,234,212,.55);background:rgba(94,234,212,.12);color:var(--accent)}
+    .btn-danger{border-color:rgba(255,107,107,.55);background:rgba(255,107,107,.12);color:var(--danger)}
+    .btn-secondary{border-color:rgba(167,176,192,.35);background:rgba(167,176,192,.10);color:var(--text)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .hint{color:var(--muted);font-size:13px}
+    ul{list-style:none;margin:0;padding:0}
+    li{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(0,0,0,.12)}
+    .item-info{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .item-info span{overflow:hidden;text-overflow:ellipsis}
+    .muted{color:var(--muted);font-size:12px}
+    .item-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .kpi{border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(0,0,0,.10)}
+    .kpi .v{font-size:20px;font-weight:700}
+    .kpi .t{font-size:12px;color:var(--muted)}
+    canvas{width:100%;height:220px;border-radius:14px;border:1px solid var(--border);background:rgba(0,0,0,.12)}
+    .split{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .split .left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:8px 10px;border-radius:999px}
+    footer{position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,16,.86);backdrop-filter:blur(10px);border-top:1px solid var(--border)}
+    footer .wrap{padding:10px 14px}
+    /* ===== Records sections UX ===== */
+    .record-section {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--card, #fff);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 10px 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .record-section .title {
+      font-weight: 800;
+    }
+
+    .record-section .meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      opacity: 0.85;
+      font-size: 0.95em;
+    }
+
+    .record-section .chev {
+      display: inline-block;
+      transform: rotate(0deg);
+      transition: transform 0.15s ease;
+      opacity: 0.8;
+    }
+
+    .record-section.is-collapsed .chev {
+      transform: rotate(-90deg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Акценты */
+    .record-upcoming {
+      border-left: 4px solid rgba(76,175,80,0.9);
+    }
+
+    .record-past {
+      opacity: 0.78;
+    }
+
+    /* Сегодня */
+    .record-today {
+      background: rgba(76,175,80,0.08);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="padding-bottom:10px">
+      <h1>Учёт мастера</h1>
+      <div class="sub">Доходы · записи · аналитика.</div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-screen="price">Прайс</button>
+      <button class="nav-btn" data-screen="records">Записи</button>
+      <button class="nav-btn" data-screen="archive">Архив</button>
+      <button class="nav-btn" data-screen="analytics">Аналитика</button>
+      <button class="nav-btn" data-screen="expenses">Расходы</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- PRICE -->
+    <section id="screen-price" data-screen="price">
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <div class="pill">Добавь услуги — и можно записывать клиентов.</div>
+            </div>
+            <div class="row" style="flex:0 0 auto;gap:8px">
+              <button class="btn" id="btn-export">Резервная копия</button>
+              <button class="btn" id="btn-import">Импорт</button>
+              <input type="file" id="import-file" accept="application/json" hidden />
+            </div>
+          </div>
+          <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+          <form id="service-form">
+            <div class="row">
+              <div>
+                <label>Название услуги</label>
+                <input id="service-name" required placeholder="Напр. Классика" />
+              </div>
+              <div>
+                <label>Цена (₽)</label>
+                <input id="service-price" required inputmode="numeric" placeholder="2500" />
+              </div>
+              <div>
+                <label>Время (мин)</label>
+                <input id="service-time" required inputmode="numeric" placeholder="120" />
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="service-submit" type="submit">Добавить</button>
+              <button class="btn btn-secondary" id="service-cancel" type="button" hidden>Отмена</button>
+              <span class="hint" id="service-mode-text" style="align-self:center"></span>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Список услуг</strong>
+              <span class="hint">Нажми "Изменить", чтобы править.</span>
+            </div>
+
+            <div class="left" style="gap:8px;justify-content:flex-end">
+              <div style="position:relative;min-width:220px;max-width:320px;flex:1">
+                <input id="service-search" placeholder="Поиск услуги..." />
+                <button type="button" id="service-search-clear"
+                  class="btn btn-secondary"
+                  style="position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:10px;display:none">
+                  ✕
+                </button>
+              </div>
+              <span class="pill" id="services-count"></span>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <ul id="service-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECORDS -->
+    <section id="screen-records" data-screen="records" hidden>
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Новая запись</strong>
+              <span class="hint" id="records-hint"></span>
+            </div>
+            <span class="pill" id="record-mode-text"></span>
+          </div>
+          <div style="height:10px"></div>
+
+          <form id="record-form">
+            <datalist id="clients-datalist"></datalist>
+
+            <div class="row">
+              <div>
+                <label>Дата</label>
+                <input id="record-date" type="date" required />
+              </div>
+              <div>
+                <label>ФИО клиента</label>
+                <input id="record-client" list="clients-datalist" required placeholder="Иванова Анна" />
+              </div>
+              <div>
+                <label>Услуга</label>
+                <select id="record-service" required>
+                  <option value="">— выбери услугу —</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:10px">
+              <div>
+                <label>Цена (₽)</label>
+                <input id="record-price" inputmode="numeric" placeholder="0" />
+              </div>
+              <div>
+                <label>Скидка (%)</label>
+                <input id="record-discount" inputmode="numeric" placeholder="0"/>
+              </div>
+              <div>
+                <label>Итого (₽)</label>
+                <input id="record-total" disabled/>
+              </div>
+              <div>
+                <label>Время (мин)</label>
+                <input id="record-time" disabled />
+              </div>
+              <div>
+                <label>Примечание (опц.)</label>
+                <input id="record-note" placeholder="Напр. аллергия / пожелания" />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="record-submit" type="submit">Сохранить</button>
+              <button class="btn btn-secondary" id="record-cancel" type="button" hidden>Отмена</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Записи</strong>
+              <span class="hint">Сверху — ближайшие записи.</span>
+            </div>
+            <div class="left">
+              <label style="margin:0;color:var(--muted);font-size:12px">Фильтр по месяцу</label>
+              <select id="records-month-filter" style="min-width:160px">
+                <option value="">Все</option>
+              </select>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <ul id="record-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHIVE -->
+    <section id="screen-archive" data-screen="archive" hidden>
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Архив по месяцам</strong>
+              <span class="hint">Выбери месяц — увидишь клиентов, доход и часы.</span>
+            </div>
+            <div class="left">
+              <label style="margin:0;color:var(--muted);font-size:12px">Месяц</label>
+              <select id="archive-month" style="min-width:160px"></select>
+            </div>
+          </div>
+          <div style="height:12px"></div>
+          <div id="archive-summary" class="hint"></div>
+        </div>
+
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Список</strong>
+              <span class="hint">Клиент · услуга · цена · дата</span>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <ul id="archive-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section id="screen-analytics" data-screen="analytics" hidden>
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Аналитика</strong>
+              <span class="hint">Главные цифры за месяц и за год.</span>
+            </div>
+            <div class="left">
+              <label style="margin:0;color:var(--muted);font-size:12px">Месяц</label>
+              <select id="analytics-month" style="min-width:160px"></select>
+            </div>
+          </div>
+          <div style="height:12px"></div>
+          <div class="kpis" id="analytics-kpis"></div>
+          <div style="height:12px"></div>
+          <canvas id="analytics-chart" width="900" height="260"></canvas>
+          <div class="hint" style="margin-top:10px">График — доход по месяцам.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section id="screen-expenses" data-screen="expenses" hidden>
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Расходы</strong>
+              <span class="hint">Расходы учитываются в «чистом» доходе.</span>
+            </div>
+            <div class="left">
+              <label style="margin:0;color:var(--muted);font-size:12px">Фильтр по месяцу</label>
+              <select id="expenses-month-filter" style="min-width:160px">
+                <option value="">Все</option>
+              </select>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+
+          <form id="expense-form">
+            <div class="row">
+              <div>
+                <label>Дата</label>
+                <input id="expense-date" type="date" required />
+              </div>
+              <div>
+                <label>Сумма (₽)</label>
+                <input id="expense-amount" required inputmode="numeric" placeholder="500" />
+              </div>
+              <div>
+                <label>Комментарий</label>
+                <input id="expense-note" placeholder="Материалы / аренда / реклама..." />
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" type="submit">Добавить расход</button>
+            </div>
+          </form>
+
+          <div style="height:14px"></div>
+          <div id="expenses-summary" class="hint"></div>
+          <div style="height:10px"></div>
+          <ul id="expense-list"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+/* =====================
+   State & Helpers
+===================== */
+const STORAGE_KEY = "beautyAccounting_v2";
+const DEFAULT_SERVICES = [
+  { id: 1,  name: "Классика", price: 1700, time: 150 },
+  { id: 2,  name: "2Д", price: 1800, time: 150 },
+  { id: 3,  name: "2,5Д", price: 2000, time: 180 },
+  { id: 4,  name: "3Д", price: 2100, time: 180 },
+  { id: 5,  name: "Коррекция", price: 500, time: 30 },
+  { id: 6,  name: "Коррекция + окрашивание", price: 900, time: 60 },
+  { id: 7,  name: "Ламинирование бровей без окрашивания", price: 1400, time: 60 },
+  { id: 8,  name: "Ламинирование бровей с окрашиванием", price: 1600, time: 60 },
+  { id: 9,  name: "Ламинирование ресниц с окрашиванием", price: 1700, time: 60 },
+  { id: 10, name: "Вельвет с окрашиванием", price: 1900, time: 60 },
+  { id: 11, name: "Окрашивание ресниц", price: 500, time: 20 },
+  { id: 12, name: "Удаление пушка", price: 200, time: 5 },
+
+  { id: 13, name: "Коррекция + ламинирование", price: 1700, time: 90 },
+  { id: 14, name: "Коррекция + вельвет", price: 1900, time: 90 },
+  { id: 15, name: "Коррекция + 1Д", price: 1900, time: 180 },
+  { id: 16, name: "Коррекция + 1,5Д", price: 2000, time: 180 },
+  { id: 17, name: "Коррекция + 2Д", price: 2100, time: 180 },
+  { id: 18, name: "Коррекция + 2,5Д", price: 2200, time: 210 },
+  { id: 19, name: "Коррекция + 3Д", price: 2300, time: 210 },
+  { id: 20, name: "Коррекция + Аниме", price: 2200, time: 210 },
+
+  { id: 21, name: "Коррекция + окрашивание + ламинирование", price: 2400, time: 90 },
+  { id: 22, name: "Коррекция + окрашивание + вельвет", price: 2600, time: 90 },
+  { id: 23, name: "Коррекция + окрашивание + 1Д", price: 2600, time: 180 },
+  { id: 24, name: "Коррекция + окрашивание + 1,5Д", price: 2700, time: 180 },
+  { id: 25, name: "Коррекция + окрашивание + 2Д", price: 2800, time: 180 },
+  { id: 26, name: "Коррекция + окрашивание + 2,5Д", price: 2900, time: 210 },
+  { id: 27, name: "Коррекция + окрашивание + 3Д", price: 3000, time: 210 },
+  { id: 28, name: "Коррекция + окрашивание + Аниме", price: 2900, time: 210 },
+
+  { id: 29, name: "Ламинирование с коррекцией без окрашивания + ламинирование", price: 2400, time: 90 },
+  { id: 30, name: "Ламинирование с коррекцией без окрашивания + вельвет", price: 2600, time: 90 },
+  { id: 31, name: "Ламинирование с коррекцией без окрашивания + 1Д", price: 2600, time: 180 },
+  { id: 32, name: "Ламинирование с коррекцией без окрашивания + 1,5Д", price: 2700, time: 180 },
+  { id: 33, name: "Ламинирование с коррекцией без окрашивания + 2Д", price: 2800, time: 180 },
+  { id: 34, name: "Ламинирование с коррекцией без окрашивания + 2,5Д", price: 2900, time: 210 },
+  { id: 35, name: "Ламинирование с коррекцией без окрашивания + 3Д", price: 3000, time: 210 },
+  { id: 36, name: "Ламинирование с коррекцией без окрашивания + аниме", price: 2900, time: 210 },
+
+  { id: 37, name: "Ламинирование с коррекцией и окрашиванием + ламинирование", price: 2700, time: 90 },
+  { id: 38, name: "Ламинирование с коррекцией и окрашиванием + вельвет", price: 2900, time: 90 },
+  { id: 39, name: "Ламинирование с коррекцией и окрашиванием + 1Д", price: 2900, time: 180 },
+  { id: 40, name: "Ламинирование с коррекцией и окрашиванием + 1,5Д", price: 3000, time: 180 },
+  { id: 41, name: "Ламинирование с коррекцией и окрашиванием + 2Д", price: 3100, time: 180 },
+  { id: 42, name: "Ламинирование с коррекцией и окрашиванием + 2,5Д", price: 3200, time: 210 },
+  { id: 43, name: "Ламинирование с коррекцией и окрашиванием + 3Д", price: 3300, time: 210 },   // ⚠️ было 0,0 ч
+  { id: 44, name: "Ламинирование с коррекцией и окрашиванием + Аниме", price: 3200, time: 210 },
+];
+
+
+function todayISO(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function monthFromDate(iso){ return String(iso).slice(0,7); } // YYYY-MM
+
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function formatDateRu(iso){
+  const [y,m,d] = String(iso).split("-");
+  if(!y||!m||!d) return iso;
+  return `${d}.${m}.${y}`;
+}
+function formatRubAxis(n){
+  const v = Math.round(n);
+  if (v >= 10000) return Math.round(v/1000) + "k";
+  if (v >= 1000)  return (v/1000).toFixed(v % 1000 === 0 ? 0 : 1) + "k";
+  return String(v);
+}
+
+
+function daysDiffAbs(iso){
+  const a = new Date(iso+"T00:00:00");
+  const b = new Date(todayISO()+"T00:00:00");
+  const ms = a-b;
+  return Math.round(ms/(1000*60*60*24));
+}
+
+function toInt(v){
+  const n = parseInt(String(v).replace(/[^\d-]/g,""),10);
+  return Number.isFinite(n) ? n : 0;
+}
+function toMoney(v){ return toInt(v); }
+
+function uid(){ return Math.floor(Date.now() + Math.random()*1000); }
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return { services: DEFAULT_SERVICES.map(s => ({...s})), records: [], expenses: [] };
+
+    const parsed = JSON.parse(raw);
+    return {
+      services: Array.isArray(parsed.services) ? parsed.services : [],
+      records: Array.isArray(parsed.records) ? parsed.records : [],
+      expenses: Array.isArray(parsed.expenses) ? parsed.expenses : []
+    };
+  }catch(e){
+    console.warn("loadState failed:", e);
+    return { services: DEFAULT_SERVICES.map (s=> ({...s})), records: [], expenses: [] };
+  }
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+const state = loadState();
+normalizeState();
+saveState();
+
+
+// авто-починка времени в старых записях
+state.records.forEach(r => {
+  if (!r.time && r.serviceId) {
+    const svc = state.services.find(s => s.id === r.serviceId);
+    if (svc) r.time = toInt(svc.time);
+  }
+});
+saveState();
+
+// Нормализация старых/битых данных (после обновлений кода)
+function normalizeState(){
+  state.services = (state.services || []).map(s => ({
+    ...s,
+    id: Number(s.id),
+    price: toInt(s.price),
+    time: toInt(s.time),
+    name: String(s.name || "").trim()
+  }));
+
+  state.records = (state.records || []).map(r => {
+    const fixed = { ...r };
+    if(!fixed.month && fixed.date) fixed.month = monthFromDate(fixed.date);
+
+    fixed.price = toInt(fixed.price);
+    if (fixed.basePrice !== undefined) fixed.basePrice = toInt(fixed.basePrice);
+    if (fixed.finalPrice !== undefined) fixed.finalPrice = toInt(fixed.finalPrice);
+    fixed.discountPct = toInt(fixed.discountPct);
+
+    fixed.time = toInt(fixed.time);
+    if (!fixed.time && fixed.serviceId) {
+      const svc = state.services.find(s => s.id === Number(fixed.serviceId));
+      if (svc) fixed.time = toInt(svc.time);
+    }
+
+    fixed.client = String(fixed.client || "").trim();
+    fixed.serviceName = String(fixed.serviceName || "").trim();
+    fixed.note = String(fixed.note || "").trim();
+    return fixed;
+  });
+
+  state.expenses = (state.expenses || []).map(x => {
+    const fixed = { ...x };
+    fixed.amount = toInt(fixed.amount);
+    if(!fixed.month && fixed.date) fixed.month = monthFromDate(fixed.date);
+    fixed.note = String(fixed.note || "").trim();
+    return fixed;
+  });
+}
+
+
+
+state.records = (state.records || []).map(r => {
+  const fixed = { ...r };
+  if(!fixed.month && fixed.date) fixed.month = monthFromDate(fixed.date);
+
+  fixed.price = toInt(fixed.price);
+  if (fixed.basePrice !== undefined) fixed.basePrice = toInt(fixed.basePrice);
+  if (fixed.finalPrice !== undefined) fixed.finalPrice = toInt(fixed.finalPrice);
+  fixed.discountPct = toInt(fixed.discountPct);
+
+  fixed.time = toInt(fixed.time);
+  if (!fixed.time && fixed.serviceId) {
+    const svc = state.services.find(s => s.id === Number(fixed.serviceId));
+    if (svc) fixed.time = toInt(svc.time);
+  }
+
+  fixed.client = String(fixed.client || "").trim();
+  fixed.serviceName = String(fixed.serviceName || "").trim();
+  fixed.note = String(fixed.note || "").trim();
+
+  return fixed;
+});
+
+state.expenses = (state.expenses || []).map(x => {
+  const fixed = { ...x };
+  fixed.amount = toInt(fixed.amount);
+  if(!fixed.month && fixed.date) fixed.month = monthFromDate(fixed.date);
+  fixed.note = String(fixed.note || "").trim();
+  return fixed;
+});
+
+
+
+
+/* =====================
+   DOM
+===================== */
+// NAV
+const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
+const screens = Array.from(document.querySelectorAll("main section[data-screen]"));
+
+// PRICE
+const serviceForm = document.getElementById("service-form");
+const serviceName = document.getElementById("service-name");
+const servicePrice = document.getElementById("service-price");
+const serviceTime = document.getElementById("service-time");
+const serviceSubmit = document.getElementById("service-submit");
+const serviceCancel = document.getElementById("service-cancel");
+const serviceModeText = document.getElementById("service-mode-text");
+const serviceList = document.getElementById("service-list");
+const servicesCount = document.getElementById("services-count");
+const serviceSearch = document.getElementById("service-search");
+const serviceSearchClear = document.getElementById("service-search-clear");
+
+
+// BACKUP
+const btnExport = document.getElementById("btn-export");
+const btnImport = document.getElementById("btn-import");
+const importFile = document.getElementById("import-file");
+
+// RECORDS
+const recordsHint = document.getElementById("records-hint");
+const recordForm = document.getElementById("record-form");
+const recordDate = document.getElementById("record-date");
+const recordClient = document.getElementById("record-client");
+const recordService = document.getElementById("record-service");
+const recordPrice = document.getElementById("record-price");
+const recordTime = document.getElementById("record-time");
+const recordNote = document.getElementById("record-note");
+const recordDiscount = document.getElementById("record-discount");
+const recordTotal = document.getElementById("record-total");
+const recordSubmit = document.getElementById("record-submit");
+const recordCancel = document.getElementById("record-cancel");
+const recordModeText = document.getElementById("record-mode-text");
+const recordList = document.getElementById("record-list");
+const clientsDatalist = document.getElementById("clients-datalist");
+const recordsMonthFilter = document.getElementById("records-month-filter");
+
+// ARCHIVE
+const archiveMonth = document.getElementById("archive-month");
+const archiveSummary = document.getElementById("archive-summary");
+const archiveList = document.getElementById("archive-list");
+
+// ANALYTICS
+const analyticsMonth = document.getElementById("analytics-month");
+const analyticsKpis = document.getElementById("analytics-kpis");
+const analyticsChart = document.getElementById("analytics-chart");
+
+// EXPENSES
+const expenseForm = document.getElementById("expense-form");
+const expenseDate = document.getElementById("expense-date");
+const expenseAmount = document.getElementById("expense-amount");
+const expenseNote = document.getElementById("expense-note");
+const expenseList = document.getElementById("expense-list");
+const expensesSummary = document.getElementById("expenses-summary");
+const expensesMonthFilter = document.getElementById("expenses-month-filter");
+
+/* =====================
+   Services (Price)
+===================== */
+let editingServiceId = null;
+
+function setServiceEditMode(isEditing){
+  serviceSubmit.textContent = isEditing ? "Сохранить" : "Добавить";
+  serviceCancel.hidden = !isEditing;
+  serviceModeText.textContent = isEditing ? "Режим: редактирование услуги" : "";
+}
+
+serviceSearch.addEventListener("input", () => {
+  const hasText = serviceSearch.value.trim().length > 0;
+  serviceSearchClear.style.display = hasText ? "block" : "none";
+  renderServices();
+});
+
+serviceSearchClear.addEventListener("click", () => {
+  serviceSearch.value = "";
+  serviceSearchClear.style.display = "none";
+  renderServices();
+  serviceSearch.blur(); // чтобы клавиатура свернулась
+});
+
+
+function resetServiceForm(){
+  editingServiceId = null;
+  serviceForm.reset();
+  setServiceEditMode(false);
+  document.activeElement?.blur();
+}
+
+function renderServices(){
+  serviceList.innerHTML = "";
+
+  const q = (serviceSearch.value || "").trim().toLowerCase();
+  let list = state.services;
+
+  if (q) {
+    list = list.filter(s => (s.name || "").toLowerCase().includes(q));
+  }
+
+  servicesCount.textContent = q
+    ? `Найдено: ${list.length} / ${state.services.length}`
+    : `Услуг: ${state.services.length}`;
+
+  if(state.services.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Услуг пока нет. Добавь первую 👇</span></div>`;
+    serviceList.appendChild(li);
+    return;
+  }
+
+  if(list.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Ничего не найдено 👇</span></div>`;
+    serviceList.appendChild(li);
+    return;
+  }
+
+  list.forEach(svc => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="item-info">
+        <span><strong>${escapeHtml(svc.name)}</strong></span>
+        <span>${svc.price} ₽ · ${svc.time} мин</span>
+      </div>
+      <div class="item-actions">
+        <button type="button" class="btn btn-secondary js-svc-edit" data-id="${svc.id}">Изменить</button>
+        <button type="button" class="btn btn-danger js-svc-del" data-id="${svc.id}">Удалить</button>
+      </div>`;
+    serviceList.appendChild(li);
+  });
+
+  if (!document.getElementById("screen-records").hidden) {
+    fillServiceSelect();
+    syncRecordDerivedFields();
+  }
+}
+
+
+serviceForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const name = serviceName.value.trim();
+  const price = toMoney(servicePrice.value);
+  const time = toInt(serviceTime.value);
+
+  if(!name){ alert("Введите название услуги"); return; }
+  if(price <= 0){ alert("Цена должна быть больше 0"); return; }
+  if(time <= 0){ alert("Время должно быть больше 0"); return; }
+
+  if(editingServiceId){
+    const svc = state.services.find(s => s.id === editingServiceId);
+    if(!svc){ resetServiceForm(); return; }
+
+    svc.name = name;
+    svc.price = price;
+    svc.time = time;
+
+    // обновим snapshot в существующих записях
+    state.records.forEach(r => {
+      if(r.serviceId === editingServiceId){
+        r.serviceName = name;
+        r.time = time;
+
+        const oldTemplate = r.price;
+        r.price = price; // шаблонная цена
+
+        // если цену вручную не правили — обновим фактическую
+        if(!r.priceEdited || r.basePrice === undefined || r.basePrice === oldTemplate){
+          r.basePrice = price;
+          r.priceEdited = false;
+        }
+
+        // итог пересчитываем всегда
+        r.finalPrice = calcDiscountedPrice(r.basePrice ?? r.price, r.discountPct || 0);
+      }
+    });
+
+  } else {
+    // добавление новой услуги
+    state.services.push({ id: uid(), name, price, time });
+  }
+
+  saveState();
+  renderServices();
+  resetServiceForm();
+
+  // если мастер уже на "Записях" — обновим UI, чтобы селект сразу заполнился
+  if (!document.getElementById("screen-records").hidden) {
+    syncRecordsUI();
+  }
+
+  // также обновим архив/аналитику (месяц-селекты)
+  refreshMonthSelectors();
+});
+
+
+serviceCancel.addEventListener("click", resetServiceForm);
+
+serviceList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if(!btn) return;
+
+  const id = Number(btn.dataset.id);
+  if(btn.classList.contains("js-svc-edit")){
+    const svc = state.services.find(s => s.id === id);
+    if(!svc) return;
+    editingServiceId = id;
+    serviceName.value = svc.name;
+    servicePrice.value = svc.price;
+    serviceTime.value = svc.time;
+    setServiceEditMode(true);
+    return;
+  }
+
+  if(btn.classList.contains("js-svc-del")){
+    const used = state.records.some(r => r.serviceId === id);
+    const msg = used
+      ? "Эта услуга уже использовалась в записях. Удалить из прайса? (В записях останется название-снимок.)"
+      : "Удалить услугу?";
+    if(!confirm(msg)) return;
+
+    state.services = state.services.filter(s => s.id !== id);
+    saveState();
+    renderServices();
+    if (!document.getElementById("screen-records").hidden) syncRecordsUI();
+  }
+});
+
+/* =====================
+   Records (Appointments)
+===================== */
+let editingRecordId = null;
+
+function setRecordEditMode(isEditing){
+  recordCancel.hidden = !isEditing;
+  recordModeText.textContent = isEditing ? "Редактирование записи" : "";
+  recordSubmit.textContent = isEditing ? "Сохранить" : "Сохранить";
+}
+
+function resetRecordForm({ keepDate = true } = {}){
+  editingRecordId = null;
+  setRecordEditMode(false);
+
+  const current = recordDate.value;
+  recordForm.reset();
+  recordDate.value = keepDate && current ? current : todayISO();
+
+  syncRecordDerivedFields();
+}
+
+function fillClientsDatalist(){
+  const names = [...new Set(state.records.map(r => (r.client || "").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ru"));
+  clientsDatalist.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join("");
+}
+
+function fillServiceSelect(){
+  const prev = recordService.value;
+  recordService.innerHTML = `<option value="">— выбери услугу —</option>`;
+
+    // считаем частоту по уже сохранённым записям
+  const freq = new Map();
+  state.records.forEach(r => {
+    const id = Number(r.serviceId || 0);
+    if(!id) return;
+    freq.set(id, (freq.get(id) || 0) + 1);
+  });
+
+    // сортируем: чаще -> выше, при равенстве — по имени
+  const sorted = [...state.services].sort((a,b)=>{
+    const fa = freq.get(a.id) || 0;
+    const fb = freq.get(b.id) || 0;
+    if (fb !== fa) return fb - fa;
+    return String(a.name).localeCompare(String(b.name), "ru");
+  });
+
+  sorted.forEach(svc => {
+    const opt = document.createElement("option");
+    opt.value = String(svc.id);
+    opt.textContent = `${svc.name} — ${svc.price} ₽ · ${svc.time} мин`;
+    recordService.appendChild(opt);
+  });
+
+  // восстановим выбор, если возможно
+  if(prev && Array.from(recordService.options).some(o => o.value === prev)){
+    recordService.value = prev;
+  }
+}
+
+function syncRecordDerivedFields(){
+  const svcId = Number(recordService.value || 0);
+  const svc = state.services.find(s => s.id === svcId);
+  recordPrice.value = svc ? String(svc.price) : "";
+  recordTime.value = svc ? String(svc.time) : "";
+  syncRecordTotal();
+}
+function calcDiscountedPrice(basePrice, discountPct){
+  const pct = Math.max(0, Math.min(100, toInt(discountPct)));
+  return Math.round(basePrice * (1 - pct / 100));
+}
+
+function syncRecordTotal(){
+  const base = toMoney(recordPrice.value);
+  const pct = toInt(recordDiscount.value);
+  recordDiscount.value = pct ? String(Math.max(0, Math.min(100, pct))) : (recordDiscount.value.trim() ? "0" : "");
+  recordTotal.value = base ? String(calcDiscountedPrice(base, pct)) : "";
+}
+
+
+function syncRecordsUI(){
+  const hasServices = state.services.length > 0;
+
+  recordsHint.textContent = hasServices
+    ? "Услуга → цена/время авто. Имя запомнится в подсказках."
+    : "Нет услуг — зайди в «Прайс» и добавь хотя бы одну.";
+
+  // включаем/выключаем элементы формы (кроме даты)
+  recordForm.querySelectorAll("input, select, button").forEach(el => {
+    if(el === recordDate) return;
+    el.disabled = !hasServices;
+  });
+
+  fillServiceSelect();
+  fillClientsDatalist();
+  syncRecordDerivedFields();
+
+  // дефолт даты — сегодня, если пусто
+  if(!recordDate.value) recordDate.value = todayISO();
+
+  refreshMonthSelectors();
+  renderRecords();
+}
+
+function renderRecords(){
+  const today = todayISO();
+  recordList.innerHTML = "";
+
+  const month = recordsMonthFilter.value; // "" or YYYY-MM
+  let data = state.records;
+  if(month) data = data.filter(r => r.month === month);
+
+  if(state.records.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Записей пока нет. Добавь первую 👇</span></div>`;
+    recordList.appendChild(li);
+    return;
+  }
+
+  if(data.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>За выбранный месяц записей нет 👇</span></div>`;
+    recordList.appendChild(li);
+    return;
+  }
+
+  const upcoming = data
+    .filter(r => r.date >= today)
+    .sort((a,b)=>{
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+
+  const past = data
+    .filter(r => r.date < today)
+    .sort((a,b)=>{
+      if (a.date !== b.date) return a.date > b.date ? -1 : 1;
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+
+  function appendSection({ title, items, emptyText, sectionClass, defaultCollapsed }) {
+    // Заголовок (кликабельный)
+    const head = document.createElement("li");
+    head.classList.add("record-section");
+    if (defaultCollapsed) head.classList.add("is-collapsed");
+
+    head.innerHTML = `
+      <span class="title">${escapeHtml(title)}</span>
+      <span class="meta">
+        <span class="count">${items.length}</span>
+        <span class="chev">▾</span>
+      </span>
+    `;
+    recordList.appendChild(head);
+
+    // Тело секции
+    const body = document.createElement("li");
+    recordList.appendChild(body);
+
+    const bodyWrap = document.createElement("div");
+    if (defaultCollapsed) bodyWrap.classList.add("hidden");
+    body.appendChild(bodyWrap);
+
+    head.addEventListener("click", () => {
+      const isHidden = bodyWrap.classList.toggle("hidden");
+      head.classList.toggle("is-collapsed", isHidden);
+    });
+
+    if (items.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "muted";
+      empty.style.padding = "8px 2px 12px";
+      empty.textContent = emptyText;
+      bodyWrap.appendChild(empty);
+      return;
+    }
+
+    items.forEach(rec => {
+      const li = document.createElement("li");
+      if (sectionClass) li.classList.add(sectionClass);
+
+      // подсветка "сегодня" — ВАЖНО: today без скобок
+      if (rec.date === today) li.classList.add("record-today");
+
+      const note = rec.note ? `<span class="muted">📝 ${escapeHtml(rec.note)}</span>` : "";
+      const disc = rec.discountPct ? `<span class="muted">Скидка: ${rec.discountPct}%</span>` : "";
+
+      li.innerHTML = `
+        <div class="item-info">
+          <span><strong>${escapeHtml(rec.client)}</strong> — ${escapeHtml(rec.serviceName || "")}</span>
+          <span>${formatDateRu(rec.date)} · ${rec.finalPrice ?? rec.price} ₽ · ${rec.time} мин</span>
+          ${disc}
+          ${note}
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn btn-secondary js-rec-edit" data-id="${rec.id}">Изменить</button>
+          <button type="button" class="btn btn-danger js-rec-del" data-id="${rec.id}">Удалить</button>
+        </div>
+      `;
+      bodyWrap.appendChild(li);
+    });
+  }
+
+  // ВАЖНО: вызовы секций — СНАРУЖИ items.forEach
+  appendSection({
+    title: "Предстоящие",
+    items: upcoming,
+    emptyText: "Нет предстоящих записей",
+    sectionClass: "record-upcoming",
+    defaultCollapsed: false
+  });
+
+  appendSection({
+    title: "Прошедшие",
+    items: past,
+    emptyText: "Нет прошедших записей",
+    sectionClass: "record-past",
+    defaultCollapsed: true
+  });
+}
+
+
+recordPrice.addEventListener("input", syncRecordTotal);
+recordDiscount.addEventListener("input", syncRecordTotal);
+recordService.addEventListener("change", syncRecordDerivedFields);
+
+recordForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const date = recordDate.value || todayISO();
+  const month = monthFromDate(date);
+  const client = recordClient.value.trim();
+  const serviceId = Number(recordService.value || 0);
+  const svc = state.services.find(s => s.id === serviceId);
+
+  if(!client){ alert("Введите ФИО клиента"); return; }
+  if(!svc){ alert("Выберите услугу из прайса"); return; }
+  
+  const basePrice = toMoney(recordPrice.value) || svc.price;
+  const discountPct = Math.max(0, Math.min(100, toInt(recordDiscount.value)));
+
+
+  const payload = {
+    id: editingRecordId || uid(),
+    date,
+    month,
+    client,
+    serviceId: svc.id,
+    serviceName: svc.name,   // snapshot на момент записи
+    price: svc.price,               // шаблон (снимок прайса)
+    basePrice: basePrice,           // фактическая цена в записи (может быть вручную)
+    priceEdited: basePrice !== svc.price,
+    time: toInt(svc.time),
+    discountPct: discountPct,
+    finalPrice: calcDiscountedPrice(basePrice, discountPct),
+    note: recordNote.value.trim(),
+    createdAt: editingRecordId ? (state.records.find(r=>r.id===editingRecordId)?.createdAt || Date.now()) : Date.now()
+  };
+
+  if(editingRecordId){
+    const idx = state.records.findIndex(r => r.id === editingRecordId);
+    if(idx >= 0) state.records[idx] = payload;
+  }else{
+    state.records.push(payload);
+  }
+
+  saveState();
+  fillClientsDatalist();
+  refreshMonthSelectors();
+  renderRecords();
+  fillServiceSelect();
+  // после добавления — дату оставляем, остальное чистим
+  resetRecordForm({ keepDate: false });
+  document.activeElement?.blur();
+});
+
+recordCancel.addEventListener("click", () => resetRecordForm({ keepDate: false }));
+
+recordList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const id = Number(btn.dataset.id);
+  const rec = state.records.find(r => r.id === id);
+  if(!rec) return;
+
+  if(btn.classList.contains("js-rec-edit")){
+    editingRecordId = id;
+    setRecordEditMode(true);
+    recordDate.value = rec.date;
+    recordClient.value = rec.client;
+    recordService.value = String(rec.serviceId);
+    syncRecordDerivedFields();
+    recordNote.value = rec.note || "";
+    recordClient.focus();
+    recordPrice.value = String(rec.basePrice ?? rec.price ?? "");
+    recordDiscount.value = String(rec.discountPct ?? "");
+    syncRecordTotal();
+
+    return;
+  }
+
+  if(btn.classList.contains("js-rec-del")){
+    if(!confirm("Удалить запись?")) return;
+    state.records = state.records.filter(r => r.id !== id);
+    saveState();
+    fillClientsDatalist();
+    refreshMonthSelectors();
+    renderRecords();
+    fillServiceSelect();
+  }
+});
+
+recordsMonthFilter.addEventListener("change", renderRecords);
+
+/* =====================
+   Expenses
+===================== */
+function renderExpenses(){
+  expenseList.innerHTML = "";
+
+  const month = expensesMonthFilter.value;
+  let data = state.expenses;
+  if(month) data = data.filter(x => x.month === month);
+
+  const totalAll = state.expenses.reduce((s,x)=>s + (x.amount||0), 0);
+  const totalMonth = data.reduce((s,x)=>s + (x.amount||0), 0);
+
+  expensesSummary.innerHTML = month
+    ? `Расходы за <b>${escapeHtml(month)}</b>: <b>${totalMonth} ₽</b> · Всего: <b>${totalAll} ₽</b>`
+    : `Всего расходов: <b>${totalAll} ₽</b>`;
+
+  if(state.expenses.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Расходов пока нет 👇</span></div>`;
+    expenseList.appendChild(li);
+    return;
+  }
+  if(data.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>За выбранный месяц расходов нет 👇</span></div>`;
+    expenseList.appendChild(li);
+    return;
+  }
+
+  const sorted = [...data].sort((a,b)=>{
+    if(a.date !== b.date) return a.date > b.date ? -1 : 1;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+
+  sorted.forEach(x=>{
+    const li = document.createElement("li");
+    const note = x.note ? `<span class="muted">📝 ${escapeHtml(x.note)}</span>` : "";
+    li.innerHTML = `
+      <div class="item-info">
+        <span><strong>${x.amount} ₽</strong> · ${formatDateRu(x.date)}</span>
+        ${note}
+      </div>
+      <div class="item-actions">
+        <button type="button" class="btn btn-danger js-exp-del" data-id="${x.id}">Удалить</button>
+      </div>`;
+    expenseList.appendChild(li);
+  });
+}
+
+expenseForm.addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const date = expenseDate.value || todayISO();
+  const amount = toMoney(expenseAmount.value);
+  if(amount <= 0){ alert("Сумма должна быть больше 0"); return; }
+  const entry = {
+    id: uid(),
+    date,
+    month: monthFromDate(date),
+    amount,
+    note: expenseNote.value.trim(),
+    createdAt: Date.now()
+  };
+  state.expenses.push(entry);
+  saveState();
+  expenseForm.reset();
+  expenseDate.value = todayISO();
+  refreshMonthSelectors();
+  renderExpenses();
+});
+
+expenseList.addEventListener("click",(e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  if(!btn.classList.contains("js-exp-del")) return;
+  const id = Number(btn.dataset.id);
+  if(!confirm("Удалить расход?")) return;
+  state.expenses = state.expenses.filter(x=>x.id !== id);
+  saveState();
+  refreshMonthSelectors();
+  renderExpenses();
+});
+
+expensesMonthFilter.addEventListener("change", renderExpenses);
+
+/* =====================
+   Archive
+===================== */
+function renderArchive(){
+  const month = archiveMonth.value || monthFromDate(todayISO());
+  const rows = state.records.filter(r => r.month === month);
+
+  const income = rows.reduce((s,r)=>s + toInt(r.finalPrice ?? r.basePrice ?? r.price),0);
+  const minutes = rows.reduce((s,r)=>s + toInt(r.time), 0);
+  const hours = Math.round((minutes/60)*10)/10;
+  const clients = new Set(rows.map(r => (r.client||"").trim()).filter(Boolean)).size;
+
+  archiveSummary.innerHTML = rows.length
+    ? `Месяц <b>${escapeHtml(month)}</b>: клиентов <b>${clients}</b> · доход <b>${income} ₽</b> · часов <b>${hours}</b> (мин: ${minutes})`
+    : `Месяц <b>${escapeHtml(month)}</b>: записей нет`;
+
+  archiveList.innerHTML = "";
+  if(rows.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Пусто 👇</span></div>`;
+    archiveList.appendChild(li);
+    return;
+  }
+
+  const sorted = [...rows].sort((a,b)=> a.date > b.date ? -1 : 1);
+  sorted.forEach(r=>{
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="item-info">
+        <span><strong>${escapeHtml(r.client)}</strong> — ${escapeHtml(r.serviceName||"")}</span>
+        <span>${formatDateRu(r.date)} · ${r.finalPrice ?? r.basePrice ?? r.price} ₽ · ${r.time} мин</span>
+      </div>`;
+    archiveList.appendChild(li);
+  });
+}
+
+archiveMonth.addEventListener("change", renderArchive);
+
+/* =====================
+   Analytics
+===================== */
+function sumIncomeForMonth(m){
+  return state.records
+    .filter(r => r.month === m)
+    .reduce((s,r) => s + toInt(r.finalPrice ?? r.price), 0);
+}
+
+function sumMinutesForMonth(m){
+  return state.records
+    .filter(r => r.month === m)
+    .reduce((s,r) => s + toInt(r.time), 0);
+}
+
+function uniqueClientsForMonth(m){
+  return new Set(state.records.filter(r=>r.month===m).map(r=>(r.client||"").trim()).filter(Boolean)).size;
+}
+function sumExpensesForMonth(m){
+  return state.expenses.filter(x=>x.month===m).reduce((s,x)=>s+(x.amount||0),0);
+}
+function monthsSet(){
+  const set = new Set();
+  // добавим текущий месяц всегда
+  set.add(monthFromDate(todayISO()));
+  state.records.forEach(r=>set.add(r.month));
+  state.expenses.forEach(x=>set.add(x.month));
+  return [...set].sort().reverse(); // свежие сверху
+}
+
+function renderAnalytics(){
+  const month = analyticsMonth.value || monthFromDate(todayISO());
+  const income = sumIncomeForMonth(month);
+  const minutes = sumMinutesForMonth(month);
+  const hours = minutes/60;
+  const clients = uniqueClientsForMonth(month);
+  const avgCheck = clients ? Math.round(income/clients) : 0;
+
+  const monthExpenses = sumExpensesForMonth (month);
+  const monthNet = income - monthExpenses;
+
+  const netPerHour = minutes >= 60 ? Math.round(monthNet / (minutes/60)) : 0;
+
+
+  const year = month.slice(0,4);
+  const yearIncome = state.records
+    .filter(r => String(r.month).startsWith(year+"-"))
+    .reduce((s,r)=> s + toInt(r.finalPrice ?? r.price), 0);
+  const yearExpenses = state.expenses.filter(x => String(x.month).startsWith(year+"-")).reduce((s,x)=>s+(x.amount||0),0);
+  const yearNet = yearIncome - yearExpenses;
+
+  const kpis = [
+    { t:`Доход за ${month}`, v:`${income} ₽` },
+    { t:`Чистый доход за ${month}`, v:`${monthNet} ₽` },
+    { t:`Чистый доход в час (${month})`, v:`${netPerHour} ₽/ч` },
+    { t:`Клиентов (${month})`, v:`${clients}` },
+    { t:`Средний чек (${month})`, v:`${avgCheck} ₽` },
+    { t:`Доход за ${year}`, v:`${yearIncome} ₽` },
+    { t:`Чистый доход за ${year}`, v:`${yearNet} ₽` },
+    { t:`Расходы за ${year}`, v:`${yearExpenses} ₽` },
+  ];
+
+  analyticsKpis.innerHTML = kpis.map(k => `
+    <div class="kpi">
+      <div class="v">${escapeHtml(k.v)}</div>
+      <div class="t">${escapeHtml(k.t)}</div>
+    </div>`).join("");
+
+  drawIncomeChartLast6Months();
+}
+
+analyticsMonth.addEventListener("change", renderAnalytics);
+
+function drawIncomeChartLast6Months(){
+  const canvas = analyticsChart;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+
+  // подложка
+  ctx.clearRect(0,0,w,h);
+
+  const months = monthsSet().slice(0,6).reverse(); // слева старее → справа свежее
+  const values = months.map(m => sumIncomeForMonth(m));
+  let maxV = Math.max(1, ...values);
+  const pow = Math.pow(10, String(Math.floor(maxV)).length - 1);
+  const step = pow / 2; // 50, 500, 5000 ...
+  maxV = Math.ceil(maxV / step) * step;
+
+
+  const padL = 50, padR = 16, padT = 18, padB = 44;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+
+  // оси/сетка
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "rgba(238,241,247,.9)";
+  ctx.font = "12px system-ui";
+
+  // y ticks
+  ctx.globalAlpha = 0.6;
+  for(let i=0;i<=4;i++){
+    const y = padT + (chartH*i/4);
+    ctx.strokeStyle = "rgba(255,255,255,.10)";
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+    const label = maxV*(1 - i/4);
+    ctx.fillStyle = "rgba(167,176,192,.75)";
+    ctx.fillText(formatRubAxis(label), 10, y+5);
+  }
+
+  // bars
+  const gap = 14;
+  const barW = (chartW - gap*(months.length-1)) / months.length;
+
+  values.forEach((v,i)=>{
+    const x = padL + i*(barW+gap);
+    const barH = Math.max(2, Math.round(chartH*(v/maxV)));
+    const y = padT + (chartH - barH);
+
+    // бар
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = "rgba(94,234,212,.35)";
+    roundRect(ctx, x, y, barW, barH, 10, true, false);
+
+    // значение
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(238,241,247,.92)";
+    ctx.font = "13px system-ui";
+    ctx.fillText(formatRub(v), x+4, y-6);
+
+    // месяц
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = "rgba(167,176,192,.95)";
+    ctx.font = "13px system-ui";
+    ctx.fillText(months[i].slice(5), x+4, h-18); // MM
+  });
+}
+function formatRub(v){
+  return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
+}
+
+
+function roundRect(ctx, x, y, width, height, radius, fill, stroke){
+  const r = Math.min(radius, width/2, height/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+width, y, x+width, y+height, r);
+  ctx.arcTo(x+width, y+height, x, y+height, r);
+  ctx.arcTo(x, y+height, x, y, r);
+  ctx.arcTo(x, y, x+width, y, r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
+/* =====================
+   Months selectors (Records/Archive/Analytics/Expenses)
+===================== */
+function refreshMonthSelectors(){
+  const months = monthsSet(); // sorted desc
+
+  // records filter
+  const curRecords = recordsMonthFilter.value || "";
+  recordsMonthFilter.innerHTML = `<option value="">Все</option>` + months.map(m=>`<option value="${m}">${m}</option>`).join("");
+  recordsMonthFilter.value = months.includes(curRecords) ? curRecords : "";
+
+
+  // archive month
+  const curArchive = archiveMonth.value || "";
+  archiveMonth.innerHTML = months.map(m=>`<option value="${m}">${m}</option>`).join("");
+  archiveMonth.value = months.includes(curArchive) ? curArchive : monthFromDate(todayISO());
+
+  // analytics month
+  const curAnalytics = analyticsMonth.value || "";
+  analyticsMonth.innerHTML = months.map(m=>`<option value="${m}">${m}</option>`).join("");
+  analyticsMonth.value = months.includes(curAnalytics) ? curAnalytics : monthFromDate(todayISO());
+
+  // expenses filter
+  const curExp = expensesMonthFilter.value || "";
+  expensesMonthFilter.innerHTML = `<option value="">Все</option>` + months.map(m=>`<option value="${m}">${m}</option>`).join("");
+  expensesMonthFilter.value = months.includes(curExp) ? curExp : "";
+}
+
+/* =====================
+   Backup / Restore
+===================== */
+btnExport.addEventListener("click", ()=>{
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `beauty-accounting-backup-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+btnImport.addEventListener("click", ()=> importFile.click());
+
+importFile.addEventListener("change", async ()=>{
+  const file = importFile.files && importFile.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const incoming = parsed.data || parsed; // поддержка "сырого" состояния
+    if(!incoming || typeof incoming !== "object") throw new Error("Bad file");
+
+    if(!confirm("Импорт заменит текущие данные. Продолжить?")) return;
+
+    state.services = Array.isArray(incoming.services) ? incoming.services : [];
+    state.records = Array.isArray(incoming.records) ? incoming.records : [];
+    state.expenses = Array.isArray(incoming.expenses) ? incoming.expenses : [];
+
+    normalizeState();
+    saveState();
+    renderServices();
+    syncRecordsUI();
+    renderArchive();
+    renderAnalytics();
+    renderExpenses();
+    alert("Импорт завершён ✅");
+  }catch(e){
+    console.warn(e);
+    alert("Не удалось импортировать файл. Проверь, что это JSON-резервная копия.");
+  }finally{
+    importFile.value = "";
+  }
+});
+
+/* =====================
+   Navigation
+===================== */
+function showScreen(screenName){
+  screens.forEach(sec => { sec.hidden = sec.dataset.screen !== screenName; });
+  navButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.screen === screenName));
+
+  // ленивые обновления — только когда экран открыт
+  if(screenName === "records") syncRecordsUI();
+  if(screenName === "archive") { refreshMonthSelectors(); renderArchive(); }
+  if(screenName === "analytics") { refreshMonthSelectors(); renderAnalytics(); }
+  if(screenName === "expenses") { refreshMonthSelectors(); renderExpenses(); }
+}
+
+navButtons.forEach(btn => btn.addEventListener("click", ()=> showScreen(btn.dataset.screen)));
+
+/* =====================
+   Boot
+===================== */
+(function init(){
+  // defaults
+  recordDate.value = todayISO();
+  expenseDate.value = todayISO();
+
+  renderServices();
+  refreshMonthSelectors();
+  // не вызываем syncRecordsUI тут, чтобы не дёргать лишнее; откроется при переходе
+  renderExpenses();
+  renderArchive();
+  renderAnalytics();
+
+  showScreen("price");
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js" , {scope: "/"});
+    });
+  }
+</script>
+</body>
+</html>
