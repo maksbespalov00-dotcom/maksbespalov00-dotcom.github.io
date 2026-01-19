@@ -50,14 +50,14 @@
       border-top:1px solid var(--border);
       align-items: center;
     }
-    .nav-btn--udpate {
+    .nav-btn--update {
       margin-left: auto;
       padding: 10px 14px;
       min-width: auto;
       font-weight: 700;
       opacity: .85;
     }
-    .nav-btn--udpate.is-hot{
+    .nav-btn--update.is-hot{
       border-color: rgba(94, 234, 212, .9);
       box-shadow: 0 0 0 2px rgba(94,234,212,.15);
       opacity: 1;
@@ -1661,13 +1661,6 @@ async function initServiceWorkerUpdates(){
 
 document.addEventListener("DOMContentLoaded", initServiceWorkerUpdates);
 
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js" , {scope: "/"});
-    });
-  }
 </script>
 </body>
 </html>
