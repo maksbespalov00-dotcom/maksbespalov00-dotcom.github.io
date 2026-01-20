@@ -829,6 +829,13 @@ function renderServices(){
   if (q) {
     list = list.filter(s => (s.name || "").toLowerCase().includes(q));
   }
+  // ✅ СОРТИРОВКА ДЛЯ "ПРАЙСА" ПО АЛФАВИТУ (не трогает state.services)
+list = [...list].sort((a, b) =>
+  String(a.name || "").localeCompare(String(b.name || ""), "ru", {
+    sensitivity: "base",
+    numeric: true
+  })
+);
 
   servicesCount.textContent = q
     ? `Найдено: ${list.length} / ${state.services.length}`
