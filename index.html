@@ -117,6 +117,19 @@
       display: block;
       width: 100%;
       max-width: 100%;
+      min-height: 42px;
+      line-height: 1.2;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: left;
+    }
+    input[type="date"]::-webkit-date-and-time-value{
+      text-align:left;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator{
+      opacity:.85;
+      filter:invert(0.9);
+      cursor:pointer;
     }
     /* select: читаемые выпадающие списки */
     select{
