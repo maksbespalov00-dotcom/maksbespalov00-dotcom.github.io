@@ -246,6 +246,8 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+    .client-item { cursor:pointer; }
+    .client-item:hover { border-color:rgba(94,234,212,.45); }
   </style>
 </head>
 <body>
@@ -257,6 +259,7 @@
     <nav>
       <button class="nav-btn active" data-screen="price">Прайс</button>
       <button class="nav-btn" data-screen="records">Записи</button>
+      <button class="nav-btn" data-screen="clients">Клиенты</button>
       <button class="nav-btn" data-screen="archive">Архив</button>
       <button class="nav-btn" data-screen="analytics">Аналитика</button>
       <button class="nav-btn" data-screen="expenses">Расходы</button>
@@ -407,6 +410,39 @@
           </div>
           <div style="height:10px"></div>
           <ul id="record-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTS -->
+    <section id="screen-clients" data-screen="clients" hidden>
+      <div class="grid">
+        <div class="card">
+          <div class="split">
+            <div class="left">
+              <strong>Клиенты</strong>
+              <span class="hint">Поиск по ФИО и последнему комментарию.</span>
+            </div>
+            <span class="pill" id="clients-count">Клиентов: 0</span>
+          </div>
+          <div style="height:10px"></div>
+          <input id="clients-search" placeholder="Поиск клиента по ФИО..." />
+          <div style="height:10px"></div>
+          <ul id="clients-list"></ul>
+        </div>
+
+        <div class="card" id="client-history-card" hidden>
+          <div class="split">
+            <div class="left">
+              <strong id="client-history-title">История клиента</strong>
+              <span class="hint">Сверху — самые новые записи.</span>
+            </div>
+            <button class="btn btn-secondary" type="button" id="client-history-close">Закрыть</button>
+          </div>
+          <div style="height:12px"></div>
+          <div id="client-history-summary" class="hint"></div>
+          <div style="height:10px"></div>
+          <ul id="client-history-list"></ul>
         </div>
       </div>
     </section>
@@ -768,6 +804,16 @@ const recordModeText = document.getElementById("record-mode-text");
 const recordList = document.getElementById("record-list");
 const clientsDatalist = document.getElementById("clients-datalist");
 const recordsMonthFilter = document.getElementById("records-month-filter");
+
+// CLIENTS
+const clientsSearch = document.getElementById("clients-search");
+const clientsCount = document.getElementById("clients-count");
+const clientsList = document.getElementById("clients-list");
+const clientHistoryCard = document.getElementById("client-history-card");
+const clientHistoryTitle = document.getElementById("client-history-title");
+const clientHistorySummary = document.getElementById("client-history-summary");
+const clientHistoryList = document.getElementById("client-history-list");
+const clientHistoryClose = document.getElementById("client-history-close");
 
 // ARCHIVE
 const archiveMonth = document.getElementById("archive-month");
@@ -1237,6 +1283,7 @@ recordForm.addEventListener("submit", (e) => {
   refreshMonthSelectors();
   renderRecords();
   fillServiceSelect();
+  renderClients();
   // после добавления — дату оставляем, остальное чистим
   resetRecordForm({ keepDate: false });
   document.activeElement?.blur();
@@ -1275,10 +1322,132 @@ recordList.addEventListener("click", (e) => {
     refreshMonthSelectors();
     renderRecords();
     fillServiceSelect();
+    renderClients();
   }
 });
 
 recordsMonthFilter.addEventListener("change", renderRecords);
+
+let selectedClientName = "";
+
+function compareByLatest(a, b){
+  if (a.date !== b.date) return a.date > b.date ? -1 : 1;
+  return (b.createdAt || 0) - (a.createdAt || 0);
+}
+
+function getClientRows(){
+  const byClient = new Map();
+
+  state.records.forEach((rec) => {
+    const name = String(rec.client || "").trim();
+    if (!name) return;
+    if (!byClient.has(name)) byClient.set(name, []);
+    byClient.get(name).push(rec);
+  });
+
+  return [...byClient.entries()]
+    .map(([name, records]) => {
+      const sorted = [...records].sort(compareByLatest);
+      return {
+        name,
+        records: sorted,
+        latest: sorted[0]
+      };
+    })
+    .sort((a,b) => a.name.localeCompare(b.name, "ru", { sensitivity: "base" }));
+}
+
+function renderClientHistory(clientName){
+  const row = getClientRows().find(x => x.name === clientName);
+  if(!row){
+    clientHistoryCard.hidden = true;
+    selectedClientName = "";
+    return;
+  }
+
+  selectedClientName = clientName;
+  clientHistoryCard.hidden = false;
+  clientHistoryTitle.textContent = `История: ${clientName}`;
+
+  const latest = row.latest;
+  clientHistorySummary.innerHTML = latest
+    ? `Последняя запись: <b>${formatDateRu(latest.date)}</b> · <b>${escapeHtml(latest.serviceName || "—")}</b> · <b>${latest.finalPrice ?? latest.price} ₽</b>`
+    : "";
+
+  clientHistoryList.innerHTML = "";
+
+  row.records.forEach(rec => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="item-info">
+        <span><strong>${formatDateRu(rec.date)}</strong> · ${escapeHtml(rec.serviceName || "—")}</span>
+        <span>Итог: ${rec.finalPrice ?? rec.price} ₽</span>
+        <span class="muted">Примечание: ${escapeHtml((rec.note || "").trim() || "—")}</span>
+      </div>
+    `;
+    clientHistoryList.appendChild(li);
+  });
+}
+
+function renderClients(){
+  const rows = getClientRows();
+  const q = (clientsSearch.value || "").trim().toLowerCase();
+  const filtered = q
+    ? rows.filter(r => r.name.toLowerCase().includes(q))
+    : rows;
+
+  clientsCount.textContent = q
+    ? `Найдено: ${filtered.length} / ${rows.length}`
+    : `Клиентов: ${rows.length}`;
+
+  clientsList.innerHTML = "";
+
+  if(rows.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Клиентов пока нет. Добавьте запись 👇</span></div>`;
+    clientsList.appendChild(li);
+    clientHistoryCard.hidden = true;
+    return;
+  }
+
+  if(filtered.length === 0){
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="item-info"><span>Поиск не дал результатов 👇</span></div>`;
+    clientsList.appendChild(li);
+    if(selectedClientName && !filtered.some(r => r.name === selectedClientName)){
+      clientHistoryCard.hidden = true;
+    }
+    return;
+  }
+
+  filtered.forEach((row) => {
+    const li = document.createElement("li");
+    li.classList.add("client-item");
+    li.dataset.client = row.name;
+    li.innerHTML = `
+      <div class="item-info">
+        <span><strong>${escapeHtml(row.name)}</strong></span>
+        <span class="muted">Последний комментарий: ${escapeHtml((row.latest?.note || "").trim() || "—")}</span>
+      </div>
+    `;
+    clientsList.appendChild(li);
+  });
+
+  if(selectedClientName && rows.some(r => r.name === selectedClientName)){
+    renderClientHistory(selectedClientName);
+  }
+}
+
+clientsSearch.addEventListener("input", renderClients);
+clientsList.addEventListener("click", (e) => {
+  const li = e.target.closest("li.client-item");
+  if(!li) return;
+  renderClientHistory(li.dataset.client || "");
+});
+clientHistoryClose.addEventListener("click", () => {
+  selectedClientName = "";
+  clientHistoryCard.hidden = true;
+});
 
 /* =====================
    Expenses
@@ -1626,6 +1795,7 @@ importFile.addEventListener("change", async ()=>{
     saveState();
     renderServices();
     syncRecordsUI();
+    renderClients();
     renderArchive();
     renderAnalytics();
     renderExpenses();
@@ -1647,6 +1817,7 @@ function showScreen(screenName){
 
   // ленивые обновления — только когда экран открыт
   if(screenName === "records") syncRecordsUI();
+  if(screenName === "clients") renderClients();
   if(screenName === "archive") { refreshMonthSelectors(); renderArchive(); }
   if(screenName === "analytics") { refreshMonthSelectors(); renderAnalytics(); }
   if(screenName === "expenses") { refreshMonthSelectors(); renderExpenses(); }
@@ -1668,6 +1839,7 @@ navButtons.forEach(btn => btn.addEventListener("click", ()=> showScreen(btn.data
   renderExpenses();
   renderArchive();
   renderAnalytics();
+  renderClients();
 
   showScreen("price");
 })();
